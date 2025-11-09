@@ -1,0 +1,138 @@
+DROP DATABASE IF EXISTS BATESR2Docket_System;
+GO
+
+CREATE DATABASE BATESR2Docket_System;
+GO
+
+USE BATESR2Docket_System;
+GO
+
+DROP TABLE IF EXISTS AdjustmentPromptLink;
+DROP TABLE IF EXISTS KitchenPrompt;
+DROP TABLE IF EXISTS KitchenDocket;
+DROP TABLE IF EXISTS Docket;
+DROP TABLE IF EXISTS MealAdjustment;
+DROP TABLE IF EXISTS OrderItem;
+DROP TABLE IF EXISTS Order_T;
+DROP TABLE IF EXISTS Meal;
+DROP TABLE IF EXISTS MealCategory;
+DROP TABLE IF EXISTS Table_T;
+GO
+
+CREATE TABLE Table_T (
+    TableID INT NOT NULL IDENTITY(1,1),
+    TableNumber INT NOT NULL,
+    IsTakeAway BIT NOT NULL,
+    PRIMARY KEY (TableID)
+);
+
+CREATE TABLE MealCategory (
+    MealCategoryID INT NOT NULL IDENTITY(1,1),
+    MealCategoryName VARCHAR(50) NOT NULL,
+    PRIMARY KEY (MealCategoryID)
+);
+
+CREATE TABLE Meal (
+    MealID INT NOT NULL IDENTITY(1,1),
+    MealCategoryID INT NOT NULL,
+    MealName VARCHAR(255) NOT NULL,
+    MealPrice DECIMAL(5,2) NOT NULL,
+    PreparationTime INT NOT NULL,
+    PRIMARY KEY (MealID),
+    FOREIGN KEY (MealCategoryID) REFERENCES MealCategory(MealCategoryID)
+);
+
+CREATE TABLE Order_T (
+    OrderID INT NOT NULL IDENTITY(1,1),
+    TableID INT NOT NULL,
+    OrderCreateTime DATETIME NOT NULL,
+    OrderStatus VARCHAR(10) NOT NULL,
+    PRIMARY KEY (OrderID),
+    FOREIGN KEY (TableID) REFERENCES Table_T(TableID)
+);
+
+CREATE TABLE OrderItem (
+    OrderItemID INT NOT NULL IDENTITY(1,1),
+    OrderID INT NOT NULL,
+    MealID INT NOT NULL,
+    QuantityOrdered INT NOT NULL,
+    PRIMARY KEY (OrderItemID),
+    FOREIGN KEY (OrderID) REFERENCES Order_T(OrderID) ON DELETE CASCADE,
+    FOREIGN KEY (MealID) REFERENCES Meal(MealID)
+);
+
+CREATE TABLE MealAdjustment (
+    MealAdjustmentID INT NOT NULL IDENTITY(1,1),
+    OrderItemID INT NOT NULL,
+    Adjustment VARCHAR(255) NOT NULL,
+    IsAllergy BIT NOT NULL,
+    PRIMARY KEY (MealAdjustmentID),
+    FOREIGN KEY (OrderItemID) REFERENCES OrderItem(OrderItemID) ON DELETE CASCADE
+);
+
+CREATE TABLE Docket (
+    DocketID INT NOT NULL IDENTITY(1,1),
+    OrderID INT NOT NULL,
+    TimeEstimate INT NOT NULL,
+    GroupedWithTable INT,
+    IsGrouped BIT NOT NULL,
+    OrderSent BIT,
+    PRIMARY KEY (DocketID),
+    FOREIGN KEY (GroupedWithTable) REFERENCES Table_T(TableID),
+    FOREIGN KEY (OrderID) REFERENCES Order_T(OrderID) ON DELETE CASCADE
+);
+
+CREATE TABLE KitchenPrompt (
+    KitchenPromptID INT NOT NULL IDENTITY(1,1),
+    KitchenDocketID INT NOT NULL,
+    OrderItemID INT,
+    PromptType VARCHAR(50) NOT NULL,
+    PromptPriority INT NOT NULL,
+    PromptMessage VARCHAR(255) NOT NULL,
+    IsHighlighted BIT NOT NULL,
+    PromptHighlightColour VARCHAR(7),
+    PRIMARY KEY (KitchenPromptID),
+    FOREIGN KEY (OrderItemID) REFERENCES OrderItem(OrderItemID) ON DELETE CASCADE
+);
+
+CREATE TABLE AdjustmentPromptLink (
+    AdjustmentPromptLinkID INT NOT NULL IDENTITY(1,1),
+    MealAdjustmentID INT NOT NULL,
+    KitchenPromptID INT NOT NULL,
+    PRIMARY KEY (AdjustmentPromptLinkID),
+    FOREIGN KEY (MealAdjustmentID) REFERENCES MealAdjustment(MealAdjustmentID) ON DELETE CASCADE,
+    FOREIGN KEY (KitchenPromptID) REFERENCES KitchenPrompt(KitchenPromptID) ON DELETE NO ACTION
+);
+
+INSERT INTO Table_T (TableNumber, IsTakeAway)
+VALUES 
+(1, 0),
+(2, 0),
+(3, 0),
+(4, 0),
+(5, 0),
+(6, 0),
+(7, 0),
+(8, 0),
+(9, 0),
+(10, 0),
+(99, 1);
+
+INSERT INTO MealCategory (MealCategoryName)
+VALUES 
+('Entrée'),
+('Main'),
+('Dessert');
+
+INSERT INTO Meal (MealCategoryID, MealName, MealPrice, PreparationTime)
+VALUES 
+(1, 'Garlic Bread', 11.00, 7),
+(1, 'Salt & Pepper Squid', 15.00, 7),
+(1, 'Pork Belly Bites', 15.00, 7),
+(2, 'Pasta Carbonara', 29.00, 22),
+(2, 'Steak', 31.00, 20), 
+(2, 'Blue Cod & Scallops', 36.00, 12),
+(3, 'Chocolate Brownie', 12.00, 3),
+(3, 'Ice Cream Sundae', 10.00, 7),
+(3, 'Affogato', 13.00, 12);
+
